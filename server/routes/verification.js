@@ -1,19 +1,19 @@
-const express = require('express');
-const Claim = require('../models/Claim');
-const User = require('../models/User');
-const { authenticateToken } = require('./auth');
-const ComprehensiveVerificationService = require('../services/ComprehensiveVerificationService');
+const express = require("express");
+const Claim = require("../models/Claim");
+const User = require("../models/User");
+const { authenticateToken } = require("./auth");
+const ComprehensiveVerificationService = require("../services/ComprehensiveVerificationService");
 
 const router = express.Router();
 
 // Submit user verification
-router.post('/submit', authenticateToken, async (req, res) => {
+router.post("/submit", authenticateToken, async (req, res) => {
   try {
     const { claimId, verdict, evidence, explanation } = req.body;
 
     const claim = await Claim.findById(claimId);
     if (!claim) {
-      return res.status(404).json({ error: 'Claim not found' });
+      return res.status(404).json({ error: "Claim not found" });
     }
 
     const user = await User.findById(req.user.userId);
@@ -24,7 +24,7 @@ router.post('/submit', authenticateToken, async (req, res) => {
     if (explanation) claim.explanation = explanation;
     claim.verifiedBy = user._id;
     claim.verifiedAt = new Date();
-    claim.verificationStatus = 'verified';
+    claim.verificationStatus = "verified";
 
     await claim.save();
 
@@ -32,25 +32,25 @@ router.post('/submit', authenticateToken, async (req, res) => {
     user.stats.verificationsSubmitted++;
     await user.save();
 
-    res.json({ message: 'Verification submitted', claim });
+    res.json({ message: "Verification submitted", claim });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 // Vote on verification (community feedback)
-router.post('/vote', authenticateToken, async (req, res) => {
+router.post("/vote", authenticateToken, async (req, res) => {
   try {
     const { claimId, helpful } = req.body;
 
     const claim = await Claim.findById(claimId);
     if (!claim) {
-      return res.status(404).json({ error: 'Claim not found' });
+      return res.status(404).json({ error: "Claim not found" });
     }
 
     // Track votes (simplified - in production, use separate collection)
     if (!claim.votes) claim.votes = { helpful: 0, notHelpful: 0 };
-    
+
     if (helpful) {
       claim.votes.helpful++;
     } else {
@@ -59,14 +59,14 @@ router.post('/vote', authenticateToken, async (req, res) => {
 
     await claim.save();
 
-    res.json({ message: 'Vote recorded', votes: claim.votes });
+    res.json({ message: "Vote recorded", votes: claim.votes });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
 // Get verification history
-router.get('/history', authenticateToken, async (req, res) => {
+router.get("/history", authenticateToken, async (req, res) => {
   try {
     const claims = await Claim.find({ verifiedBy: req.user.userId })
       .sort({ verifiedAt: -1 })
@@ -79,43 +79,54 @@ router.get('/history', authenticateToken, async (req, res) => {
 });
 
 // AI-powered claim verification with ML and web scraping
-router.post('/verify-claim', async (req, res) => {
+router.post("/verify-claim", async (req, res) => {
   try {
-    const { claim, category = 'other' } = req.body;
-    
+    const { claim, category = "other", aiOnly = false } = req.body;
+
     if (!claim || claim.trim().length === 0) {
-      return res.status(400).json({ error: 'Claim text is required' });
+      return res.status(400).json({ error: "Claim text is required" });
     }
 
-    console.log(`🔍 Verifying claim: "${claim.substring(0, 50)}..." in category: ${category}`);
-    
+    console.log(
+      `🔍 Verifying claim: "${claim.substring(
+        0,
+        50
+      )}..." in category: ${category}, aiOnly: ${aiOnly}`
+    );
+
     // Use comprehensive verification service
-    const result = await ComprehensiveVerificationService.verifyClaim(claim, category);
-    
-    console.log('✅ Verification completed, result:', {
+    const result = await ComprehensiveVerificationService.verifyClaim(
+      claim,
+      category,
+      { aiOnly }
+    );
+
+    console.log("✅ Verification completed, result:", {
       verdict: result.verdict,
       confidence: result.confidence,
-      classification: result.classification
+      classification: result.classification,
     });
-    
+
     res.json({
       success: true,
       result,
-      message: 'Claim verification completed'
+      message: "Claim verification completed",
     });
-    
   } catch (error) {
-    console.error('❌ Claim verification failed:', error);
-    res.status(500).json({ 
+    console.error("❌ Claim verification failed:", error);
+    res.status(500).json({
       success: false,
       error: error.message,
-      result: ComprehensiveVerificationService.getFallbackResult(req.body.claim || '', error.message)
+      result: ComprehensiveVerificationService.getFallbackResult(
+        req.body.claim || "",
+        error.message
+      ),
     });
   }
 });
 
 // Get verification service status
-router.get('/status', async (req, res) => {
+router.get("/status", async (req, res) => {
   try {
     const status = ComprehensiveVerificationService.getStatus();
     res.json(status);
@@ -125,14 +136,16 @@ router.get('/status', async (req, res) => {
 });
 
 // Initialize ML models (admin endpoint)
-router.post('/initialize-ml', async (req, res) => {
+router.post("/initialize-ml", async (req, res) => {
   try {
-    const MLVerificationService = require('../services/MLVerificationService');
+    const MLVerificationService = require("../services/MLVerificationService");
     const initialized = await MLVerificationService.initializeModels();
-    
+
     res.json({
       success: initialized,
-      message: initialized ? 'ML models initialized successfully' : 'Failed to initialize ML models'
+      message: initialized
+        ? "ML models initialized successfully"
+        : "Failed to initialize ML models",
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
