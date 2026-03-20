@@ -40,12 +40,19 @@ A comprehensive multi-agent AI system for detecting, verifying, and managing mis
 
 ### Installation
 
-1. **Install dependencies**:
+1. **Install backend dependencies**:
 ```bash
-npm run install-all
+cd backend/server
+npm install
 ```
 
-2. **Configure environment variables**:
+2. **Install frontend dependencies**:
+```bash
+cd frontend/client
+npm install
+```
+
+3. **Configure environment variables**:
 Create a `.env` file in the root directory:
 ```env
 PORT=5000
@@ -55,7 +62,16 @@ OPENAI_API_KEY=your_openai_api_key_here
 NODE_ENV=development
 ```
 
-3. **Start the application**:
+4. **Start the application**:
+
+**Backend** (from `backend/server`):
+```bash
+npm start
+# or for development with hot-reload
+npm run dev
+```
+
+**Frontend** (from `frontend/client`):
 ```bash
 npm run dev
 ```
@@ -66,23 +82,99 @@ The server will run on `http://localhost:5000` and the client on `http://localho
 
 ```
 misinformation-intelligence-platform/
-├── client/                 # React + TypeScript frontend
-│   ├── src/
-│   │   ├── components/    # Reusable UI components
-│   │   ├── pages/         # Admin & User dashboards
-│   │   ├── services/      # API services
-│   │   ├── hooks/         # Custom React hooks
-│   │   └── utils/         # Utility functions
-│   └── package.json
-├── server/                # Node.js + Express backend
-│   ├── agents/           # AI agent implementations
-│   ├── models/           # MongoDB schemas
-│   ├── routes/           # API routes
-│   ├── services/         # Business logic
-│   └── index.js          # Server entry point
-├── package.json
+├── frontend/                      # Frontend applications
+│   ├── client/                    # React + TypeScript web app
+│   │   ├── src/
+│   │   │   ├── components/       # Reusable UI components
+│   │   │   ├── contexts/         # React contexts (language, theme)
+│   │   │   ├── lib/              # API & utility libraries
+│   │   │   ├── pages/            # Admin & User dashboards
+│   │   │   ├── store/            # State management
+│   │   │   ├── App.tsx           # Main React app
+│   │   │   └── main.tsx          # Entry point
+│   │   ├── package.json
+│   │   ├── vite.config.ts        # Vite configuration
+│   │   └── tailwind.config.js    # TailwindCSS config
+│   ├── extension/                 # Chrome/Edge browser extension
+│   │   ├── content.js            # Content script for claim detection
+│   │   ├── background.js         # Service worker
+│   │   ├── popup.html            # Extension popup UI
+│   │   ├── manifest.json         # Extension manifest (v3)
+│   │   └── icons/                # Extension icons
+│   └── public/                    # Static assets
+├── backend/                       # Backend services
+│   ├── server/                    # Node.js + Express application
+│   │   ├── agents/               # AI agent implementations
+│   │   │   ├── IngestorAgent.js
+│   │   │   ├── ClaimExtractorAgent.js
+│   │   │   ├── ClusterAgent.js
+│   │   │   ├── VerificationAgent.js
+│   │   │   └── ... (more agents)
+│   │   ├── models/               # MongoDB schemas
+│   │   ├── routes/               # API endpoints
+│   │   ├── services/             # Business logic
+│   │   ├── ml_models/            # ML model files
+│   │   └── index.js              # Server entry point
+│   ├── scripts/                   # Utility & setup scripts
+│   │   ├── check-mongodb.js
+│   │   ├── setup-ml-verification.js
+│   │   └── ... (more scripts)
+│   └── Claim - Sheet1.csv        # Test data
+├── .env.example                   # Environment template
+├── package.json                   # Root package config
+├── requirements.txt               # Python dependencies
 └── README.md
 ```
+
+## 🔄 Development Workflow
+
+### Working with Frontend & Backend Separately
+
+**Backend Development Process:**
+1. Navigate to `backend/server` directory
+2. Modify agent files in `backend/server/agents/`
+3. Update routes in `backend/server/routes/`
+4. Modify services in `backend/server/services/`
+5. Run tests and start server: `npm start` or `npm run dev`
+
+**Frontend Development Process:**
+1. Navigate to `frontend/client` directory
+2. Create/modify components in `frontend/client/src/components/`
+3. Add new pages in `frontend/client/src/pages/`
+4. Update API calls in `frontend/client/src/lib/api.ts`
+5. Run dev server: `npm run dev`
+
+**Browser Extension Development:**
+1. Located in `frontend/extension/`
+2. Modify content scripts in `content.js`
+3. Update popup UI in `popup.html` and `popup.js`
+4. Reload extension in `chrome://extensions/` after changes
+
+### Running Both Services Concurrently
+
+For full development (recommended), open two terminals:
+
+**Terminal 1 - Backend:**
+```bash
+cd backend/server
+npm run dev
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend/client
+npm run dev
+```
+
+Both services will hot-reload on file changes.
+
+### Utility Scripts
+
+Pre-built scripts are located in `backend/scripts/`:
+- `setup-ml-verification.js` - Setup ML verification services
+- `setup-enhanced-verification.js` - Setup enhanced verification
+- `check-mongodb.js` - Verify MongoDB connection
+- `debug-registration.js` - Debug registration issues
 
 ## 🎨 Tech Stack
 
@@ -175,15 +267,21 @@ Our idea is to build a Chrome extension frontline paired with a lightweight Node
 - Dev/Deployment: Docker, GitHub Actions, Vercel/Render/Cloud Run recommended
 
 ## Quick Start (extension-focused)
-1. Configure `.env` with API key and DB (OPENAI_API_KEY or GEMINI_API_KEY, MONGODB_URI).  
+1. Configure `.env` in root with API keys and DB (OPENAI_API_KEY or GEMINI_API_KEY, MONGODB_URI).  
 2. Start backend:
 ```bash
-cd Missinformation
+cd backend/server
 npm install
 npm start
 ```
-3. Load extension: open `chrome://extensions/`, enable Developer mode, "Load unpacked" -> select `Missinformation/extension`.  
-4. Select text on any page and click "Verify" in the extension popup to see verdict, confidence, and evidence.
+3. In a separate terminal, start frontend:
+```bash
+cd frontend/client
+npm install
+npm run dev
+```
+4. Load extension: open `chrome://extensions/`, enable Developer mode, "Load unpacked" -> select `frontend/extension`.  
+5. Select text on any page and click "Verify" in the extension popup to see verdict, confidence, and evidence.
 
 ## Demo & Hackathon MVP
 - Demo flow: install extension → select claim on a live page → extension shows verdict + evidence → flagged items appear in admin dashboard.
